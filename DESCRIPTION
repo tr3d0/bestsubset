@@ -1,12 +1,13 @@
 Package: bestsubset
-Title: Best Subset Selection via MIQP using Gurobi
-Version: 0.0.0.9000
+Title: Best Subset Selection via MIQP (Fixed k and Auto-EBIC)
+Version: 0.1.0
 Authors@R: 
-    person("Edoardo", "Lanzettu", , "edoardo.lanzetti@epfl.ch", role = c("aut", "cre"))
+    person("Edoardo", "Lanzetti", , "edoardo.lanzetti@epfl.ch", role = c("aut", "cre"))
 Description: Implements an exact algorithm for Best Subset Selection in linear 
-    regression using Mixed-Integer Quadratic Programming (MIQP). By leveraging 
-    the 'Gurobi' optimizer and Big-M constraints, it finds the globally optimal 
-    subset of predictors of size k, minimizing the Residual Sum of Squares (RSS).
+    regression using Mixed-Integer Quadratic Programming (MIQP) via the 'Gurobi' 
+    optimizer. It supports fixed-size subset selection with Big-M constraints 
+    and automatic model selection based on the Extended Bayesian Information 
+    Criterion (EBIC).
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

@@ -4,3 +4,25 @@
 .httr-oauth
 .DS_Store
 .quarto
+
+# --- R Package Build & Check Artifacts ---
+*.Rcheck/
+.Rproj.user/
+*.tar.gz
+*.tgz
+*.zip
+
+# --- C/C++ / DLLs (Standard per pacchetti, anche se ora non li usi) ---
+src/*.o
+src/*.so
+src/*.dll
+src-i386/
+src-x64/
+
+# --- Gurobi ---
+gurobi.log
+
+# --- Vignettes & Documentation intermediates ---
+Meta/
+vignettes/*.html
+vignettes/*.pdf

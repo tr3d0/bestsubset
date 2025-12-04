@@ -2,9 +2,21 @@
 % Please edit documentation in R/best_subset.R
 \name{best_subset}
 \alias{best_subset}
-\title{Best Subset Selection using Gurobi}
+\title{Best Subset Selection via MIQP (Fixed k)}
 \usage{
-best_subset(X, y, k, M = 100, time_limit = 60)
+best_subset(
+  X,
+  y,
+  k,
+  M = 15,
+  time_limit = 300,
+  mip_gap = 0.01,
+  verbose = TRUE,
+  threads = 0,
+  mip_focus = 3,
+  presolve = 2,
+  ...
+)
 }
 \arguments{
 \item{X}{Numeric matrix. The design matrix (predictors).}
@@ -13,17 +25,40 @@ best_subset(X, y, k, M = 100, time_limit = 60)
 
 \item{k}{Integer. The exact number of variables to select.}
 
-\item{M}{Numeric. Big-M parameter for constraints. Default is 100.}
+\item{M}{Numeric. Big-M parameter for constraints. Default is 15.}
 
-\item{time_limit}{Numeric. Time limit for the solver in seconds. Default is 60.}
+\item{time_limit}{Numeric. Time limit for the solver in seconds. Default is 300.}
+
+\item{mip_gap}{Numeric. The relative MIP optimality gap. Default is 0.01 (1\%).}
+
+\item{verbose}{Logical. If TRUE, shows Gurobi console output. Default is TRUE.}
+
+\item{threads}{Integer. Number of threads to use (0 = all available). Default is 0.}
+
+\item{mip_focus}{Integer. Gurobi MIPFocus parameter (1=Feasibility, 2=Optimality, 3=Bound).}
+
+\item{presolve}{Integer. Gurobi Presolve level (-1=Auto, 0=Off, 1=Conservative, 2=Aggressive).}
+
+\item{...}{Additional parameters passed directly to the Gurobi solver.}
 }
 \value{
 A list containing:
-\item{coefficients}{A named vector of estimated coefficients (including intercept).}
+\item{coefficients}{Estimated coefficients (including intercept).}
+\item{beta_vector}{Estimated coefficients (excluding intercept).}
 \item{selected_indices}{Indices of the selected variables.}
-\item{rss}{The Residual Sum of Squares of the fit.}
-\item{status}{The status of the Gurobi optimization (e.g., "OPTIMAL").}
+\item{rss}{Residual Sum of Squares on original scale.}
+\item{gap}{MIP gap achieved.}
+\item{status}{Gurobi optimization status.}
 }
 \description{
-Solves the best subset selection problem using Mixed-Integer Quadratic Programming (MIQP).
+Solves the best subset selection problem for a fixed subset size \code{k} using
+Mixed-Integer Quadratic Programming (MIQP).
+}
+\details{
+This function formulates the variable selection problem as a quadratic optimization
+problem with linear constraints. It leverages the 'Gurobi' optimizer to find the
+globally optimal subset of predictors that minimizes the Residual Sum of Squares (RSS).
+
+The method handles high-dimensional data by using a Big-M formulation to constrain
+the regression coefficients.
 }
