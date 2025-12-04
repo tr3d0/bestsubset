@@ -1,9 +1,12 @@
 Package: bestsubset
-Title: What the Package Does (One Line, Title Case)
+Title: Best Subset Selection via MIQP using Gurobi
 Version: 0.0.0.9000
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+    person("Edoardo", "Lanzettu", , "edoardo.lanzetti@epfl.ch", role = c("aut", "cre"))
+Description: Implements an exact algorithm for Best Subset Selection in linear 
+    regression using Mixed-Integer Quadratic Programming (MIQP). By leveraging 
+    the 'Gurobi' optimizer and Big-M constraints, it finds the globally optimal 
+    subset of predictors of size k, minimizing the Residual Sum of Squares (RSS).
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
