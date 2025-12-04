@@ -11,3 +11,5 @@ RoxygenNote: 7.3.3
 Imports: 
     gurobi,
     Matrix
+URL: https://github.com/tr3d0/bestsubset
+BugReports: https://github.com/tr3d0/bestsubset/issues
