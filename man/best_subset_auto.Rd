@@ -2,51 +2,43 @@
 % Please edit documentation in R/best_subset.R
 \name{best_subset_auto}
 \alias{best_subset_auto}
-\title{Best Subset Selection with Automatic k Selection (EBIC)}
+\title{Best Subset Selection with Validation Set (MSE Selection)}
 \usage{
 best_subset_auto(
-  X,
-  y,
+  X_train,
+  y_train,
+  X_val,
+  y_val,
   k_max = 10,
   time_limit_per_k = 100,
-  mip_gap = 0.01,
-  verbose = FALSE,
+  plot = TRUE,
+  verbose = TRUE,
   ...
 )
 }
 \arguments{
-\item{X}{Numeric matrix. The design matrix (predictors).}
+\item{X_train}{Numeric matrix. Training predictors.}
 
-\item{y}{Numeric vector. The response vector.}
+\item{y_train}{Numeric vector. Training response.}
 
-\item{k_max}{Integer. Maximum subset size to consider. Default is 10.}
+\item{X_val}{Numeric matrix. Validation predictors.}
 
-\item{time_limit_per_k}{Numeric. Time limit per k in seconds. Default is 100.}
+\item{y_val}{Numeric vector. Validation response.}
 
-\item{mip_gap}{Numeric. The relative MIP optimality gap. Default is 0.01.}
+\item{k_max}{Integer. Maximum subset size to consider.}
 
-\item{verbose}{Logical. If TRUE, shows Gurobi output for EACH step (can be very noisy). Default is FALSE.}
+\item{time_limit_per_k}{Numeric. Time limit per k in seconds.}
 
-\item{...}{Additional parameters passed to \code{\link{best_subset}} (e.g., \code{threads}, \code{presolve}).}
+\item{plot}{Logical. If TRUE, plots RSS (Train) and MSE (Validation).}
+
+\item{verbose}{Logical. If TRUE, shows loop progress.}
+
+\item{...}{Additional parameters passed to \code{\link{best_subset}}.}
 }
 \value{
-A list containing the best model's details (as returned by \code{\link{best_subset}}) augmented with:
-\item{best_k_selected}{The integer k that minimized EBIC.}
-\item{all_ebic}{A vector of EBIC scores for each k.}
-\item{all_rss}{A vector of RSS values for each k.}
+A list containing the best model and history of metrics.
 }
 \description{
-Runs the best subset selection algorithm for a range of subset sizes (from 1 to \code{k_max})
-and selects the globally optimal model minimizing the Extended Bayesian Information Criterion (EBIC).
-}
-\details{
-This function acts as a wrapper around \code{\link{best_subset}}. It iterates through
-all possible subset sizes up to \code{k_max}. For each size \code{k}, it fits the best subset
-model using the MIQP solver.
-
-After fitting, it calculates the EBIC for each model using the formula from Chen & Chen (2008):
-\deqn{EBIC = n \log(RSS/n) + k \log(n) + 2 \gamma \ln \binom{p}{k}}
-where \eqn{\gamma = 1} if \eqn{p > n} (high-dimensional settings) and \eqn{\gamma = 0} otherwise.
-
-The function returns the model corresponding to the minimum EBIC value.
+Runs best subset selection for k=1 to k_max on a Training set,
+and selects the optimal k by minimizing Mean Squared Error (MSE) on a Validation set.
 }

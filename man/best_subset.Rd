@@ -13,8 +13,6 @@ best_subset(
   mip_gap = 0.01,
   verbose = TRUE,
   threads = 0,
-  mip_focus = 3,
-  presolve = 2,
   ...
 )
 }
@@ -35,30 +33,12 @@ best_subset(
 
 \item{threads}{Integer. Number of threads to use (0 = all available). Default is 0.}
 
-\item{mip_focus}{Integer. Gurobi MIPFocus parameter (1=Feasibility, 2=Optimality, 3=Bound).}
-
-\item{presolve}{Integer. Gurobi Presolve level (-1=Auto, 0=Off, 1=Conservative, 2=Aggressive).}
-
 \item{...}{Additional parameters passed directly to the Gurobi solver.}
 }
 \value{
-A list containing:
-\item{coefficients}{Estimated coefficients (including intercept).}
-\item{beta_vector}{Estimated coefficients (excluding intercept).}
-\item{selected_indices}{Indices of the selected variables.}
-\item{rss}{Residual Sum of Squares on original scale.}
-\item{gap}{MIP gap achieved.}
-\item{status}{Gurobi optimization status.}
+A list containing coefficients, RSS, and status.
 }
 \description{
 Solves the best subset selection problem for a fixed subset size \code{k} using
 Mixed-Integer Quadratic Programming (MIQP).
-}
-\details{
-This function formulates the variable selection problem as a quadratic optimization
-problem with linear constraints. It leverages the 'Gurobi' optimizer to find the
-globally optimal subset of predictors that minimizes the Residual Sum of Squares (RSS).
-
-The method handles high-dimensional data by using a Big-M formulation to constrain
-the regression coefficients.
 }
