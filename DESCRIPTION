@@ -1,5 +1,5 @@
 Package: bestsubset
-Title: Best Subset Selection via MIQP (Fixed k and Auto-EBIC)
+Title: Best Subset Selection via MIQP with Validation Set Auto-Selection
 Version: 0.1.1
 Authors@R: 
     person("Edoardo", "Lanzetti", , "edoardo.lanzetti@epfl.ch", role = c("aut", "cre"))

@@ -8,7 +8,7 @@ Unlike stepwise methods (forward/backward) or Lasso (L1 regularization), this pa
 
 - **Exact Global Optimum**: Uses MIQP to find the absolute best subset of size $k$ (no heuristics).
 - **Big-M Constraints**: Implements tight Big-M constraints on regression coefficients.
-- **Auto-Tuning (EBIC)**: Automatically selects the optimal model size ($k$) using the **Extended Bayesian Information Criterion (EBIC)**.
+- **Auto-Tuning (Validation set)**: Automatically selects the optimal model size ($k$) using the **Validation Set approach** (minimizing MSE).
 - **Robust Wrapper**: Built-in scaling, time limits, and optimality gap controls.
 
 ## Prerequisites
@@ -34,26 +34,33 @@ devtools::install_github("tr3d0/bestsubset")
 ## Usage
 
 ### 1. Simulated Data
-Let's create a synthetic dataset with 50 observations and 20 predictors, where only the first 3 are truly significant.
+Let's create a synthetic dataset with 100 observations and 20 predictors, where only the first 3 are truly significant.
 
 ```r
 library(bestsubset)
 
 set.seed(123)
-n <- 50
-p <- 50
+n <- 100
+p <- 20
 X <- matrix(rnorm(n * p), n, p)
 beta_true <- c(3, 2, 1.5, rep(0, p - 3)) # Only first 3 are non-zero
 y <- X %*% beta_true + rnorm(n)
 ```
 
 ### 2. Automatic Selection (Recommended)
-Use `best_subset_auto()` to check multiple subset sizes and pick the winner via EBIC.
+Use `best_subset_auto()` to check multiple subset sizes and pick the winner via Validation MSE. You need to provide a training and a validation set.
 
 ```r
+# Split data into Train (70%) and Validation (30%)
+train_idx <- sample(1:n, size = 0.7 * n)
+X_train <- X[train_idx, ]; y_train <- y[train_idx]
+X_val   <- X[-train_idx, ]; y_val   <- y[-train_idx]
+
 # Search for best subsets from k=1 to k=10
 # Time limit: 100s per k
-fit <- best_subset_auto(X, y, k_max = 10, verbose = FALSE)
+fit <- best_subset_auto(X_train, y_train, X_val, y_val, 
+                        k_max = 10, 
+                        verbose = FALSE)
 
 # Print the winner
 print(fit$coefficients)
@@ -66,7 +73,7 @@ cat("Optimal subset size:", fit$best_k_selected)
 ```
 
 ### 3. Fixed Size Selection
-If you know exactly how many variables you want (e.g., $k=3$), use `best_subset()`:
+If you know exactly how many variables you want (e.g., $k=3$) or want to use the full dataset for a specific fit:
 
 ```r
 # Force selection of exactly 3 variables

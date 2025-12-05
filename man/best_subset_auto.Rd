@@ -2,43 +2,51 @@
 % Please edit documentation in R/best_subset.R
 \name{best_subset_auto}
 \alias{best_subset_auto}
-\title{Best Subset Selection with Validation Set (MSE Selection)}
+\title{Best Subset Selection with Validation Set}
 \usage{
 best_subset_auto(
-  X_train,
-  y_train,
+  X,
+  y,
   X_val,
   y_val,
   k_max = 10,
   time_limit_per_k = 100,
+  mip_gap = 0.01,
   plot = TRUE,
-  verbose = TRUE,
+  verbose = FALSE,
   ...
 )
 }
 \arguments{
-\item{X_train}{Numeric matrix. Training predictors.}
+\item{X}{Numeric matrix. The design matrix (predictors) - TRAINING.}
 
-\item{y_train}{Numeric vector. Training response.}
+\item{y}{Numeric vector. The response vector - TRAINING.}
 
-\item{X_val}{Numeric matrix. Validation predictors.}
+\item{X_val}{Numeric matrix. The design matrix (predictors) - VALIDATION/TEST.}
 
-\item{y_val}{Numeric vector. Validation response.}
+\item{y_val}{Numeric vector. The response vector - VALIDATION/TEST.}
 
-\item{k_max}{Integer. Maximum subset size to consider.}
+\item{k_max}{Integer. Maximum subset size to consider. Default is 10.}
 
-\item{time_limit_per_k}{Numeric. Time limit per k in seconds.}
+\item{time_limit_per_k}{Numeric. Time limit per k in seconds. Default is 100.}
 
-\item{plot}{Logical. If TRUE, plots RSS (Train) and MSE (Validation).}
+\item{mip_gap}{Numeric. The relative MIP optimality gap. Default is 0.01.}
 
-\item{verbose}{Logical. If TRUE, shows loop progress.}
+\item{plot}{Logical. If TRUE, generates an Elbow plot (RSS) and an MSE plot. Default is TRUE.}
 
-\item{...}{Additional parameters passed to \code{\link{best_subset}}.}
-}
-\value{
-A list containing the best model and history of metrics.
+\item{verbose}{Logical. If TRUE, shows progress. Default is FALSE.}
+
+\item{...}{Additional parameters passed to \code{\link{best_subset}} (e.g., \code{threads}).}
 }
 \description{
-Runs best subset selection for k=1 to k_max on a Training set,
-and selects the optimal k by minimizing Mean Squared Error (MSE) on a Validation set.
+Runs the best subset selection algorithm for a range of subset sizes (from 1 to \code{k_max})
+and selects the globally optimal model minimizing the Mean Square Error (MSE).
+}
+\details{
+This function acts as a wrapper around \code{\link{best_subset}}. It iterates through
+all possible subset sizes up to \code{k_max}. For each size \code{k}, it fits the best subset
+model using the MIQP solver.
+Runs the best subset selection algorithm for a range of subset sizes using MIQP.
+It fits the models on the training set (X, y) and selects the best k by minimizing
+the Mean Squared Error (MSE) on the provided validation/test set (X_val, y_val).
 }
