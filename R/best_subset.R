@@ -69,10 +69,9 @@ best_subset <- function(X, y, k, M = 15,
   Xty <- crossprod(X_scaled, y_scaled)
   XtX <- as(XtX, "generalMatrix")
   
-  # Q matrix: [2X'X, 0; 0, 0]
-  # Gurobi's quadratic term is 1/2 * x' Q x, so set Q = 2 * X'X to get x'X'X x
+  # Q matrix: [X'X, 0; 0, 0]
   Q <- Matrix(0, 2 * p, 2 * p, sparse = TRUE)
-  Q[1:p, 1:p] <- 2 * XtX
+  Q[1:p, 1:p] <- XtX
   
   # Linear term: -2X'y for beta, 0 for z
   obj <- c(-2 * Xty, rep(0, p))
@@ -181,6 +180,8 @@ best_subset <- function(X, y, k, M = 15,
 #' @param verbose Logical. If TRUE, shows progress. Default is FALSE.
 #' @param ... Additional parameters passed to \code{\link{best_subset}} (e.g., \code{threads}).
 #'
+#' @importFrom methods as
+#' @importFrom graphics par axis grid points abline legend
 #' @export
 best_subset_auto <- function(X, y, X_val, y_val, 
                              k_max = 10,
