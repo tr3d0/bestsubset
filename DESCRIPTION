@@ -1,12 +1,12 @@
 Package: bestsubset
 Title: Best Subset Selection via MIQP with Validation Set Auto-Selection
-Version: 0.1.2
+Version: 0.1.3
 Authors@R: 
     person("Edoardo", "Lanzetti", , "edoardo.lanzetti@epfl.ch", role = c("aut", "cre"))
 Description: Implements an exact algorithm for Best Subset Selection in linear 
     regression using Mixed-Integer Quadratic Programming (MIQP) via the 'Gurobi' 
-    optimizer. It supports fixed-size subset selection with Big-M constraints 
-    and automatic model selection based on a validation set approach.
+    optimizer. Features include warm-start optimization for sequential fitting, 
+    Big-M constraint handling, and automatic model selection via validation set MSE.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

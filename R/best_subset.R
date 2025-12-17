@@ -22,6 +22,8 @@
 #' @param threads Integer. Number of threads to use (0 = all available). Default is 0.
 #' @param mip_focus Integer. Gurobi MIPFocus parameter (1=Feasibility, 2=Optimality, 3=Bound).
 #' @param presolve Integer. Gurobi Presolve level (-1=Auto, 0=Off, 1=Conservative, 2=Aggressive).
+#' @param start_beta Numeric vector (optional). Warm start for coefficients.
+#' @param start_z Numeric vector (optional). Warm start for binary variable.
 #' @param ... Additional parameters passed directly to the Gurobi solver.
 #'
 #' @return A list containing:
@@ -35,12 +37,14 @@
 #' @importFrom Matrix Diagonal Matrix
 #' @importFrom gurobi gurobi
 #' @export
-best_subset <- function(X, y, k, M = 15, 
-                        time_limit = 300, 
+best_subset <- function(X, y, k, M = 15,
+                        start_beta = NULL,
+                        start_z = NULL,
+                        time_limit = 300,
                         mip_gap = 0.01,
                         verbose = TRUE,
                         threads = 0,
-                        mip_focus = 3,
+                        mip_focus = 1,
                         presolve = 2,
                         ...) {
   if (!requireNamespace("gurobi", quietly = TRUE)) {
@@ -91,13 +95,20 @@ best_subset <- function(X, y, k, M = 15,
   
   # 4. Gurobi Model
   model <- list()
-  model$Q <- as(Q, "generalMatrix")
+  model$Q <- Q
   model$obj <- obj
   model$A <- A
   model$rhs <- rhs
   model$sense <- sense
   model$vtype <- c(rep("C", p), rep("B", p))
-  
+  model$lb <- c(rep(-Inf, p), rep(0, p))
+
+  if (!is.null(start_beta) && !is.null(start_z)) {
+    if (length(start_beta) == p && length(start_z) == p) {
+      model$start <- c(start_beta, start_z)
+    }
+  }
+
   # 5. Parameters Setup
   # Base parameters
   params <- list(
@@ -108,23 +119,23 @@ best_subset <- function(X, y, k, M = 15,
     Presolve = presolve,
     Threads = threads
   )
-  
+
   # Append extra parameters passed via ... (if any)
   extra_params <- list(...)
   if (length(extra_params) > 0) {
     params <- c(params, extra_params)
   }
-  
+
   # 6. Solve
   result <- gurobi(model, params)
-  
+
   # 7. Process Results
-  if (result$status %in% c("OPTIMAL", "TIME_LIMIT", "SUBOPTIMAL")) {
+  if (!is.null(result$x)) {
     beta_hat_scaled <- result$x[1:p]
     z_hat <- result$x[(p + 1):(2 * p)]
-    
+
     selected_vars <- which(z_hat > 0.5)
-    
+
     # Back-scaling
     beta_final <- rep(0, p)
     if(length(selected_vars) > 0) {
@@ -141,17 +152,24 @@ best_subset <- function(X, y, k, M = 15,
     # RSS on original scale
     y_pred <- intercept + X %*% beta_final
     rss_real <- sum((y - y_pred)^2)
+
+    if (any(abs(beta_hat_scaled) >= (M - 1e-3))) {
+        warning(sprintf("Coefficient hit Big-M bound (M=%s) for k=%s. Solution might be truncated.", M, k))
+    }
     
     return(list(
       coefficients = c(Intercept = intercept, beta_final),
       beta_vector = beta_final,
+      beta_scaled = beta_hat_scaled,
+      z_vector = z_hat,
       selected_indices = selected_vars,
       rss = rss_real,
       gap = result$mipgap,
       status = result$status
     ))
   } else {
-    return(list(status = result$status, rss = Inf, selected_indices = integer(0)))
+    # Gestione fallimento totale
+    return(list(status = "NO_SOLUTION", rss = Inf, selected_indices = integer(0)))
   }
 }
 
@@ -198,47 +216,57 @@ best_subset_auto <- function(X, y, X_val, y_val,
   results_list <- list()
   mse_scores <- rep(Inf, k_max)
   rss_scores <- rep(Inf, k_max)
+
+  curr_beta_scaled <- NULL
+  curr_z <- NULL
   
   message("Starting Best Subset Selection (k_max = ", k_max, ")...")
   message("------------------------------------------------")
-  
+
   for (k in 1:k_max) {
     message(sprintf("Solving for k = %2d ... ", k), appendLF = FALSE)
-    
-    fit <- best_subset(X, y, k = k, 
-                       time_limit = time_limit_per_k, 
-                       verbose = FALSE, # Suppress inner Gurobi output to keep console clean
+
+    fit <- best_subset(X, y, k = k,
+                       M = 15,
+                       start_beta = curr_beta_scaled,
+                       start_z = curr_z,
+                       time_limit = time_limit_per_k,
+                       verbose = FALSE,
                        ...)
-    
-    if (fit$status %in% c("OPTIMAL", "TIME_LIMIT", "SUBOPTIMAL")) {
-      
+
+    if (fit$status %in% c("OPTIMAL", "TIME_LIMIT", "SUBOPTIMAL") && !is.infinite(fit$rss)) {
+
       rss_scores[k] <- fit$rss
-      
-      
+
       intercept <- fit$coefficients["Intercept"]
-      
+
       y_pred_val <- intercept + (X_val %*% fit$beta_vector)
-      
+
       mse_val <- mean((y_val - y_pred_val)^2)
-      
+
       mse_scores[k] <- mse_val
-      
+
       results_list[[k]] <- fit
-      
+
+      curr_beta_scaled <- fit$beta_scaled
+      curr_z <- fit$z_vector
+
       message("Done. Val MSE=", sprintf("%.4f", mse_val))
-      
+
     } else {
       message("Failed (Status: ", fit$status, ")")
+      curr_beta_scaled <- NULL
+      curr_z <- NULL
     }
   }
-  
+
   best_k_idx <- which.min(mse_scores)
-  
+
   if (length(best_k_idx) == 0 || is.infinite(mse_scores[best_k_idx])) {
     warning("No valid model found.")
     return(NULL)
   }
-  
+
   best_model <- results_list[[best_k_idx]]
   best_model$best_k_selected <- best_k_idx
   best_model$all_mse_val <- mse_scores

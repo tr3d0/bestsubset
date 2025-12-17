@@ -7,9 +7,10 @@ Unlike stepwise methods (forward/backward) or Lasso (L1 regularization), this pa
 ## Features
 
 - **Exact Global Optimum**: Uses MIQP to find the absolute best subset of size $k$ (no heuristics).
-- **Big-M Constraints**: Implements tight Big-M constraints on regression coefficients.
+- **Smart Warm-Start**: Significantly speeds up sequential fitting by recycling the solution from $k$ as a starting point for $k+1$.
+- **Big-M Constraints**: Implements tight Big-M constraints with automatic safety checks on coefficients.
 - **Auto-Tuning (Validation set)**: Automatically selects the optimal model size ($k$) using the **Validation Set approach** (minimizing MSE).
-- **Robust Wrapper**: Built-in scaling, time limits, and optimality gap controls.
+- **Robust Wrapper**: Gracefully handles solver timeouts and feasibility issues without crashing.
 
 ## Prerequisites
 
@@ -24,31 +25,29 @@ This package requires the **Gurobi Optimizer** software and its R interface.
 
 ## Installation
 
-Once Gurobi is ready, you can install **bestsubset** directly from GitHub:
+Once Gurobi is ready, you can install **bestsubset** from GitHub (assuming you have the source):
 
 ```r
+# If you haven't installed devtools:
 # install.packages("devtools")
 devtools::install_github("tr3d0/bestsubset")
 ```
 
 ## Usage
 
-### 1. Simulated Data
-Let's create a synthetic dataset with 100 observations and 20 predictors, where only the first 3 are truly significant.
-
+### 1. Data Preparation
 ```r
 library(bestsubset)
 
-set.seed(123)
-n <- 100
-p <- 20
+set.seed(42)
+n <- 100; p <- 20
 X <- matrix(rnorm(n * p), n, p)
-beta_true <- c(3, 2, 1.5, rep(0, p - 3)) # Only first 3 are non-zero
+beta_true <- c(3, 1.5, -2, rep(0, p - 3)) # Only first 3 are non-zero
 y <- X %*% beta_true + rnorm(n)
 ```
 
 ### 2. Automatic Selection (Recommended)
-Use `best_subset_auto()` to check multiple subset sizes and pick the winner via Validation MSE. You need to provide a training and a validation set.
+Use `best_subset_auto()` to check multiple subset sizes and pick the winner via Validation MSE. This function now leverages **warm-starts** for faster convergence.
 
 ```r
 # Split data into Train (70%) and Validation (30%)
@@ -57,9 +56,10 @@ X_train <- X[train_idx, ]; y_train <- y[train_idx]
 X_val   <- X[-train_idx, ]; y_val   <- y[-train_idx]
 
 # Search for best subsets from k=1 to k=10
-# Time limit: 100s per k
+# Time limit: 10s per k (usually sufficient with warm start)
 fit <- best_subset_auto(X_train, y_train, X_val, y_val, 
                         k_max = 10, 
+                        time_limit_per_k = 10,
                         verbose = FALSE)
 
 # Print the winner
@@ -84,9 +84,11 @@ print(fit_k3$coefficients)
 
 ## Parameters
 
-- **`time_limit`**: Maximum time (in seconds) allowed for the solver.
-- **`mip_gap`**: Stop optimization when the solution is within this % of the theoretical optimum (default 1% or `0.01`).
-- **`verbose`**: Set to `TRUE` to see the live Gurobi solver logs.
+- `k`: Number of predictors to select.
+- `M`: Big-M constant (default 15). The package will warn you if this bound is too tight.
+- `time_limit`: Maximum time (in seconds) allowed for the solver per model.
+- `mip_gap`: Relative optimality gap (default 1% or 0.01).
+- `mip_focus`: Solver focus (1=Feasibility, recommended for tight time limits).
 
 ## License
 
